@@ -1,0 +1,12 @@
+{
+  "name": "eden-core",
+  "version": "1.0.0",
+  "description": "Bot Eden Core pour gérer les tickets via Railway",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.11.0"
+  }
+}
