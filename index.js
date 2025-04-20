@@ -34,7 +34,7 @@ client.on(Events.ChannelCreate, async (channel) => {
     let content = '';
     const parentName = channel.parent?.name.toLowerCase();
 
-    if (parentName && parentName.includes('spec')) {
+    if (parentName && parentName.includes('Spec')) {
       content = `Ton ticket a été créé. ${adminRole ? `<@&${adminRole.id}>` : ''}${adminRole && respAdminRole ? ' et ' : ''}${respAdminRole ? `<@&${respAdminRole.id}>` : ''} vont prendre en charge ta demande.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
     } else {
       content = `Ton ticket a été créé.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
