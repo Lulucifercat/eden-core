@@ -1,6 +1,6 @@
 // 📜 Eden Core — Bot Discord.js avec commandes !claim, !fermer et !delete
 
-const { Client, GatewayIntentBits, PermissionFlagsBits } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 const express = require("express");
 const app = express();
 
@@ -37,7 +37,12 @@ client.on('messageCreate', async (message) => {
     try {
       const oldName = channel.name.replace(/^.+?・/, '');
       await channel.setName(`${emoji}・${oldName}`);
-      await channel.send(`🛡️ *Ce ticket est désormais sous la responsabilité de <@${member.id}>.*`);
+
+      const messages = await channel.messages.fetch({ limit: 10 });
+      const hasAlreadyClaimed = messages.some(msg => msg.content.includes("Ce ticket est désormais sous la responsabilité"));
+      if (!hasAlreadyClaimed) {
+        await channel.send(`🛡️ *Ce ticket est désormais sous la responsabilité de <@${member.id}>.*`);
+      }
     } catch (err) {
       console.error(err);
       message.reply("❌ Impossible de renommer le salon. Vérifie mes permissions.");
@@ -45,7 +50,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  // 🔒 Commande !fermer (retire les droits à l'auteur du ticket sans supprimer)
+  // 🔒 Commande !fermer (ferme sans supprimer et enlève l'accès à l'auteur)
   if (message.content.toLowerCase().startsWith('!fermer')) {
     try {
       await message.reply("🔒 *Le ticket est désormais clos. Merci pour votre message.*");
@@ -53,18 +58,14 @@ client.on('messageCreate', async (message) => {
         content: "📌 *Ce ticket a été marqué comme résolu. Un membre du staff peut le supprimer avec `!delete`.*"
       });
 
-      // Suppression des permissions pour l'auteur du ticket
-      const messages = await channel.messages.fetch({ limit: 50 });
-      const ticketOwnerMsg = messages.find(m => m.author.id !== client.user.id);
-      if (ticketOwnerMsg) {
-        const ticketOwner = ticketOwnerMsg.author;
-        await channel.permissionOverwrites.edit(ticketOwner.id, {
+      const ticketOpener = message.mentions.users.first() || channel.topic?.match(/<@(\d+)>/)?.[1];
+      if (ticketOpener) {
+        await channel.permissionOverwrites.edit(ticketOpener, {
           ViewChannel: false,
           SendMessages: false,
           ReadMessageHistory: false
         });
       }
-
     } catch (err) {
       console.error("Erreur lors de la commande !fermer :", err);
       message.reply("❌ Impossible de marquer ce ticket comme fermé.");
