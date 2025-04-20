@@ -21,20 +21,21 @@ client.once(Events.ClientReady, () => {
 });
 
 client.on(Events.ChannelCreate, async (channel) => {
-  if (!channel.name) return;
-  const guild = channel.guild;
-  if (!guild) return;
+  if (!channel.name || !channel.guild) return;
 
   try {
     const messages = await channel.messages.fetch({ limit: 10 });
     const edenRPMessage = messages.find(m => m.author.username === 'Eden RP');
     if (edenRPMessage) await edenRPMessage.delete();
 
+    const guild = channel.guild;
     const adminRole = guild.roles.cache.find(role => role.name === 'Admin');
     const respAdminRole = guild.roles.cache.find(role => role.name === 'Resp. Admin');
 
     let content = '';
-    if (channel.name.includes('ticket-background')) {
+    const lowerName = channel.name.toLowerCase();
+
+    if (lowerName.includes('ticket-background') || lowerName.includes('spec')) {
       content = `Ton ticket a été créé. ${adminRole ? `<@&${adminRole.id}>` : ''}${adminRole && respAdminRole ? ' et ' : ''}${respAdminRole ? `<@&${respAdminRole.id}>` : ''} vont prendre en charge ta demande.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
     } else {
       content = `Ton ticket a été créé.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
