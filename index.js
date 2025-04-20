@@ -43,6 +43,15 @@ client.on('messageCreate', async (message) => {
 
 setInterval(() => {
   console.log("🌙 Eden Core veille toujours dans l'obscurité...");
-}, 10 * 60 * 1000); // toutes les 10 minutes
+}, 30 * 60 * 1000); // toutes les 30 minutes pour vérifier que tout roule
 
 client.login(TOKEN);
+
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => res.send("Eden Core est en éveil."));
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Faux serveur HTTP lancé pour Render");
+});
+
