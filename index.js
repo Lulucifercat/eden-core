@@ -1,4 +1,4 @@
-// 📜 Eden-Core : gestion des tickets avec suppression du message MEE6, message unique personnalisé, ping UptimeRobot et faux serveur HTTP
+// 📜 Eden-Core : gestion des tickets avec commandes !claim, !close, !delete, ping UptimeRobot et faux serveur HTTP
 
 const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField } = require('discord.js');
 const express = require('express');
@@ -17,36 +17,6 @@ const client = new Client({
 
 client.once(Events.ClientReady, () => {
   console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
-});
-
-client.on(Events.ChannelCreate, async (channel) => {
-  if (!channel.name || !channel.guild || !channel.isTextBased()) return;
-
-  try {
-    const messages = await channel.messages.fetch({ limit: 10 });
-    const edenRPMessage = messages.find(m => m.author.username === 'Eden RP');
-    if (edenRPMessage) await edenRPMessage.delete();
-
-    const guild = channel.guild;
-    const adminRole = guild.roles.cache.find(role => role.name === 'Admin');
-    const respAdminRole = guild.roles.cache.find(role => role.name === 'Resp. Admin');
-
-    let content = '';
-    const parentName = channel.parent?.name.toLowerCase();
-
-    if (parentName && parentName.includes('Spec')) {
-      content = `Ton ticket a été créé. ${adminRole ? `<@&${adminRole.id}>` : ''}${adminRole && respAdminRole ? ' et ' : ''}${respAdminRole ? `<@&${respAdminRole.id}>` : ''} vont prendre en charge ta demande.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
-    } else {
-      content = `Ton ticket a été créé.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
-    }
-
-    const alreadySent = messages.some(m => m.author.id === client.user.id && m.content.startsWith("Ton ticket a été créé"));
-    if (!alreadySent) {
-      await channel.send({ content, allowedMentions: { parse: ['roles'] } });
-    }
-  } catch (err) {
-    console.error('❌ Erreur dans la gestion du ticket :', err);
-  }
 });
 
 client.on(Events.MessageCreate, async (message) => {
@@ -82,9 +52,8 @@ client.on(Events.MessageCreate, async (message) => {
   if (content === '!close') {
     try {
       await message.reply("🔒 *Le ticket est désormais clos. Merci pour votre message.*");
-      await channel.send({
-        content: "📌 *Ce ticket a été marqué comme résolu. Un membre du staff peut le supprimer avec `!delete`.*"
-      });
+      await channel.send("📌 *Ce ticket a été marqué comme résolu. Un membre du staff peut le supprimer avec `!delete`.*");
+
       const ticketOpener = message.mentions.users.first() || channel.topic?.match(/<@(\d+)>/)?.[1];
       if (ticketOpener) {
         await channel.permissionOverwrites.edit(ticketOpener, {
@@ -115,7 +84,6 @@ client.on(Events.MessageCreate, async (message) => {
     return;
   }
 });
-
 // 💫 Ping interne pour rester actif
 setInterval(() => {
   console.log("🌙 Eden Core veille toujours dans l'obscurité...");
