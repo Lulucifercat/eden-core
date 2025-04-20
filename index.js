@@ -1,3 +1,52 @@
+// 📜 Eden-Core : gestion des tickets en reprenant le message de MEE6 avec ping UptimeRobot et faux serveur HTTP
+
+const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField } = require('discord.js');
+const http = require('http');
+const express = require('express');
+const app = express();
+const TOKEN = process.env.TOKEN;
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ],
+  partials: [Partials.Channel, Partials.Message]
+});
+
+client.once(Events.ClientReady, () => {
+  console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
+});
+
+client.on(Events.ChannelCreate, async (channel) => {
+  if (!channel.name) return;
+  const guild = channel.guild;
+  if (!guild) return;
+
+  try {
+    const messages = await channel.messages.fetch({ limit: 10 });
+    const edenRPMessage = messages.find(m => m.author.username === 'Eden RP');
+    if (edenRPMessage) await edenRPMessage.delete();
+
+    const adminRole = guild.roles.cache.find(role => role.name === 'Admin');
+    const respAdminRole = guild.roles.cache.find(role => role.name === 'Resp. Admin');
+
+    let content = '';
+    if (channel.name.includes('ticket-background')) {
+      content = `Ton ticket a été créé. ${adminRole ? `<@&${adminRole.id}>` : ''}${adminRole && respAdminRole ? ' et ' : ''}${respAdminRole ? `<@&${respAdminRole.id}>` : ''} vont prendre en charge ta demande.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
+    } else {
+      content = `Ton ticket a été créé.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
+    }
+
+    await channel.send({
+      content,
+      allowedMentions: { parse: ['roles'] }
+    });
+  } catch (err) {
+    console.error('❌ Erreur dans la gestion du ticket :', err);
+  }
 });
 
 client.on(Events.MessageCreate, async (message) => {
