@@ -51,7 +51,7 @@ client.on('messageCreate', async (message) => {
   }
 
   // 🔒 Commande !fermer (ferme sans supprimer et enlève l'accès à l'auteur)
-  if (message.content.toLowerCase().startsWith('!fermer')) {
+  if (message.content.toLowerCase().startsWith('!close')) {
     try {
       await message.reply("🔒 *Le ticket est désormais clos. Merci pour votre message.*");
       await channel.send({
@@ -67,7 +67,7 @@ client.on('messageCreate', async (message) => {
         });
       }
     } catch (err) {
-      console.error("Erreur lors de la commande !fermer :", err);
+      console.error("Erreur lors de la commande !close :", err);
       message.reply("❌ Impossible de marquer ce ticket comme fermé.");
     }
     return;
