@@ -41,5 +41,4 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-console.log("🔑 Token reçu :", TOKEN);
 client.login(TOKEN);
