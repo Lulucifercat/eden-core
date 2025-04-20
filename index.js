@@ -41,4 +41,8 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+setInterval(() => {
+  console.log("🌙 Eden Core veille toujours dans l'obscurité...");
+}, 10 * 60 * 1000); // toutes les 10 minutes
+
 client.login(TOKEN);
