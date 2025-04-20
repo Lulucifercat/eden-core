@@ -1,7 +1,6 @@
-// 📜 Eden-Core : gestion des tickets en reprenant le message de MEE6 avec ping UptimeRobot et faux serveur HTTP
+// 📜 Eden-Core : gestion des tickets avec suppression du message MEE6, message unique personnalisé, ping UptimeRobot et faux serveur HTTP
 
 const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField } = require('discord.js');
-const http = require('http');
 const express = require('express');
 const app = express();
 const TOKEN = process.env.TOKEN;
@@ -21,7 +20,7 @@ client.once(Events.ClientReady, () => {
 });
 
 client.on(Events.ChannelCreate, async (channel) => {
-  if (!channel.name || !channel.guild) return;
+  if (!channel.name || !channel.guild || !channel.isTextBased()) return;
 
   try {
     const messages = await channel.messages.fetch({ limit: 10 });
@@ -33,18 +32,18 @@ client.on(Events.ChannelCreate, async (channel) => {
     const respAdminRole = guild.roles.cache.find(role => role.name === 'Resp. Admin');
 
     let content = '';
-    const lowerName = channel.name.toLowerCase();
+    const parentName = channel.parent?.name.toLowerCase();
 
-    if (lowerName.includes('ticket-background') || lowerName.includes('spec')) {
+    if (parentName && parentName.includes('spec')) {
       content = `Ton ticket a été créé. ${adminRole ? `<@&${adminRole.id}>` : ''}${adminRole && respAdminRole ? ' et ' : ''}${respAdminRole ? `<@&${respAdminRole.id}>` : ''} vont prendre en charge ta demande.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
     } else {
       content = `Ton ticket a été créé.\nFournis-nous toute information supplémentaire que tu juges utile pour nous aider à répondre plus rapidement.`;
     }
 
-    await channel.send({
-      content,
-      allowedMentions: { parse: ['roles'] }
-    });
+    const alreadySent = messages.some(m => m.author.id === client.user.id && m.content.startsWith("Ton ticket a été créé"));
+    if (!alreadySent) {
+      await channel.send({ content, allowedMentions: { parse: ['roles'] } });
+    }
   } catch (err) {
     console.error('❌ Erreur dans la gestion du ticket :', err);
   }
