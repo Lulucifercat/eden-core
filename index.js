@@ -90,15 +90,21 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// 🌐 Faux serveur HTTP pour Render
-app.get("/", (req, res) => res.send("Eden Core veille..."));
-app.listen(process.env.PORT || 3000, () => {
-  console.log("🌐 Faux serveur HTTP lancé pour Render");
-});
-
 // 💫 Ping interne pour rester actif
 setInterval(() => {
   console.log("🌙 Eden Core veille toujours dans l'obscurité...");
 }, 30 * 60 * 1000);
 
 client.login(TOKEN);
+
+app.get("/", (req, res) => {
+  console.log("🔁 Ping reçu depuis UptimeRobot");
+  res.send("Eden Core est éveillé.");
+});
+
+// 🌐 Faux serveur HTTP pour Render
+app.get("/", (req, res) => res.send("Eden Core veille..."));
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Faux serveur HTTP lancé pour Render");
+});
+
