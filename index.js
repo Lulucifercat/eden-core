@@ -204,9 +204,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ]
     });
 
-    await ticketChannel.send({
-      content: `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Merci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.`
-    });
+    let ticketMessage = `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Merci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.`;
+
+    if (type === 'spec') {
+      const mentions = roleMentions['spec'].join(' ');
+      ticketMessage += `\n${mentions}`;
+    }
+
+    await ticketChannel.send({ content: ticketMessage });
 
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
     if (logChannel && logChannel.isTextBased()) {
