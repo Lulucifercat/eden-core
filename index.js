@@ -175,6 +175,7 @@ client.once(Events.ClientReady, async () => {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
+
   const [action, type] = interaction.customId.split('_');
   if (action !== 'create' || !ticketCategories[type]) return;
 
@@ -183,27 +184,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const guild = interaction.guild;
 
   try {
-    const ticketChannel = await guild.channels.create({
-      name: `ticket-${user.username.toLowerCase()}`,
-      type: ChannelType.GuildText,
-      parent: categoryId,
-      topic: `Ticket de ${user.id}`,
-      permissionOverwrites: [
-        {
-          id: guild.roles.everyone,
-          deny: [PermissionsBitField.Flags.ViewChannel]
-        },
-        {
-          id: user.id,
-          allow: [
-            PermissionsBitField.Flags.ViewChannel,
-            PermissionsBitField.Flags.SendMessages,
-            PermissionsBitField.Flags.ReadMessageHistory
-          ]
-        }
-      ];
-    
-      if (type === 'dev') {
+    let permissionOverwrites = [
+      {
+        id: guild.roles.everyone,
+        deny: [PermissionsBitField.Flags.ViewChannel]
+      },
+      {
+        id: user.id,
+        allow: [
+          PermissionsBitField.Flags.ViewChannel,
+          PermissionsBitField.Flags.SendMessages,
+          PermissionsBitField.Flags.ReadMessageHistory
+        ]
+      }
+    ];
+
+    // 🔧 Synchronisation avec la catégorie DEV si besoin
+    if (type === 'dev') {
       const category = await guild.channels.fetch(categoryId);
       if (category && category.permissionOverwrites) {
         permissionOverwrites = category.permissionOverwrites.cache.map(po => ({
@@ -221,8 +218,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
     }
-    });
 
+    const ticketChannel = await guild.channels.create({
+      name: `ticket-${user.username.toLowerCase()}`,
+      type: ChannelType.GuildText,
+      parent: categoryId,
+      topic: `Ticket de ${user.id}`,
+      permissionOverwrites
+    });
+    
     let ticketMessage = `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Merci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.`;
 
     if (type === 'spec') {
