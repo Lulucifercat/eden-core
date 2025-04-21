@@ -43,24 +43,35 @@ const ticketCategories = {
   'mj': '1360717707145908284'
 };
 
+// 👥 Rôles à ping automatiquement selon le type de ticket
+const roleMentions = {
+  'spec': ['<@&ID_ADMIN>', '<@&ID_RESPADMIN>'],
+  'background': ['<@&ID_ADMIN>', '<@&ID_RESPADMIN>'],
+  'problématique': ['<@&ID_ADMIN>', '<@&ID_RESPADMIN>'],
+  'dev': ['<@&ID_DEV>'],
+  'helpeur': ['<@&ID_HELPER>'],
+  'autres': ['<@&ID_HELPER>'],
+  'mj': ['<@&ID_MJ>']
+};
+
 // Message indiquant que le bot est bien connecté
 client.once(Events.ClientReady, () => {
   console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
 });
- for (const [type, channelId] of Object.entries(ticketChannels)) {
+
+
+// Fonction d'initialisation des embeds avec bouton pour chaque salon prévu
+async function setupEmbeds() {
+  for (const [type, channelId] of Object.entries(ticketChannels)) {
     try {
       const channel = await client.channels.fetch(channelId);
       if (!channel) continue;
 
-      // Vérifie si un message avec bouton existe déjà pour éviter les doublons
+      // 🔄 Vérifie si un message avec bouton existe déjà pour éviter les doublons à chaque redémarrage
       const existingMessages = await channel.messages.fetch({ limit: 10 });
       const existing = existingMessages.find(m => m.author.id === client.user.id && m.components.length > 0);
-
-      // Cette ligne empêche les doublons d'embeds à chaque redémarrage du bot.
-      // Elle vérifie si un message avec un bouton envoyé par le bot existe déjà dans le salon.
       if (existing) continue;
 
-      // Crée l'embed d'ouverture de ticket pour ce type
       const embed = new EmbedBuilder()
         .setTitle(`🎫 Créer un ticket : ${type.charAt(0).toUpperCase() + type.slice(1)}`)
         .setDescription("Clique sur le bouton ci-dessous pour créer un ticket concernant ce sujet.")
@@ -77,7 +88,13 @@ client.once(Events.ClientReady, () => {
       console.error(`Erreur lors de l'envoi de l'embed dans ${type} :`, err);
     }
   }
+}
+
+client.once(Events.ClientReady, async () => {
+  console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
+  await setupEmbeds();
 });
+
 
 // 🎯 Ce bloc gère la création d'un ticket lorsqu’un utilisateur clique sur un bouton d’embed.
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -91,8 +108,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const guild = interaction.guild;
   }
 
-  try {
-    // Crée un salon de ticket avec les permissions spécifiques
+ try {
+    // 🧵 Crée un salon de ticket avec permissions personnalisées
     const ticketChannel = await guild.channels.create({
       name: `ticket-${user.username.toLowerCase()}`,
       type: ChannelType.GuildText,
@@ -110,29 +127,39 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ]
     });
 
-    // Message d'accueil dans le ticket créé
-    await ticketChannel.send({
-      content: `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Un membre du staff te répondra bientôt.`
-    });
+     // ✉️ Message d'accueil personnalisé dans le salon
+    let content = `Bonjour <@${user.id}>, ton ticket a été créé.`;
+    if (roleMentions[type]) {
+      content += ` ${roleMentions[type].join(' ')} a été notifié.`;
+    }
+    content += "\nMerci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.";
 
-    // Confirmation privée à l'utilisateur
+    await ticketChannel.send({ content });
+
+    // 📝 Enregistre la création du ticket dans le salon de logs
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+    if (logChannel && logChannel.isTextBased()) {
+      await logChannel.send({ content: `📥 Ticket créé : <#${ticketChannel.id}> par <@${user.id}> dans la catégorie ${type}` });
+    }
+
+    // ✅ Réponse éphémère à l'utilisateur
     await interaction.reply({ content: `✅ Ticket créé : <#${ticketChannel.id}>`, ephemeral: true });
   } catch (err) {
     console.error("Erreur lors de la création du ticket :", err);
     await interaction.reply({ content: "❌ Une erreur est survenue lors de la création du ticket.", ephemeral: true });
   }
 });
+
+
+
+  // Partie Staff pour prendre en charge les tickets
 client.on(Events.MessageCreate, async (message) => {
   if (!message.guild || message.author.bot) return;
 
   const member = message.member;
   const channel = message.channel;
   const content = message.content.toLowerCase();
-
-
-
-
-  // Partie Staff pour prendre en charge les tickets
+  
   if (content === '!claim') {
     let emoji = '🎫';
     if (member.roles.cache.some(role => role.name === 'Resp. Admin')) emoji = '🟪';
