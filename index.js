@@ -1,5 +1,5 @@
 // 📜 Eden-Core : gestion des tickets avec commandes !claim, !close, !delete, ping UptimeRobot et faux serveur HTTP
-const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
 const express = require('express');
 const app = express();
 const TOKEN = process.env.TOKEN;
