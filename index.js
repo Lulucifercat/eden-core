@@ -106,8 +106,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const categoryId = ticketCategories[type];
   const user = interaction.user;
   const guild = interaction.guild;
-  }
-
+  
  try {
     // 🧵 Crée un salon de ticket avec permissions personnalisées
     const ticketChannel = await guild.channels.create({
