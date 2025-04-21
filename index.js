@@ -105,6 +105,7 @@ Tu peux ouvrir un ticket pour :
     description: `Tu rencontres un souci technique, un bug en jeu ne nécessitant pas l’intervention d’un développeur, un problème de connexion ou tu as une question sur le serveur ?
 
 Appuie sur le bouton ci-dessous pour ouvrir un ticket avec l’équipe support. Un membre du staff viendra te répondre au plus vite.
+
 ⚠️ Merci d’expliquer clairement ton problème une fois le ticket ouvert.`
   },
   'autres': {
@@ -117,11 +118,13 @@ Tu peux déposer une réclamation pour :
 • Abus d’un joueur ou d’un membre du staff,
 • Traitement inéquitable / sanction,
 • Demande du grade streamer.
+
 ⚠️ Merci de rester respectueux, clair et de fournir des preuves si possible. Toute demande sans fondement ou insultante sera ignorée.`
   },
   'mj': {
     title: '📜 Ouvre un ticket MJ',
     description: `Tu as une demande liée à l’univers RP ? Les MJ sont là pour t’écouter.
+
 Voici quelques exemples de ce que tu peux demander :
 • Création ou modification de fiche personnage
 • Requête pour un don, une capacité spéciale, une malédiction…
@@ -149,7 +152,7 @@ async function setupEmbeds() {
 
       const button = new ButtonBuilder()
         .setCustomId(`create_${type}`)
-        .setLabel(`🎫 Ticket ${type.charAt(0).toUpperCase() + type.slice(1)}`)
+        .setLabel(`Ticket ${type.charAt(0).toUpperCase() + type.slice(1)}`)
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
@@ -168,6 +171,61 @@ setInterval(() => {
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
   await setupEmbeds();
+});
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+  const [action, type] = interaction.customId.split('_');
+  if (action !== 'create' || !ticketCategories[type]) return;
+
+  const categoryId = ticketCategories[type];
+  const user = interaction.user;
+  const guild = interaction.guild;
+
+  try {
+    const ticketChannel = await guild.channels.create({
+      name: `ticket-${user.username.toLowerCase()}`,
+      type: ChannelType.GuildText,
+      parent: categoryId,
+      topic: `Ticket de ${user.id}`,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone,
+          deny: [PermissionsBitField.Flags.ViewChannel]
+        },
+        {
+          id: user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.ReadMessageHistory
+          ]
+        }
+      ]
+    });
+
+    await ticketChannel.send({
+      content: `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Merci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.`
+    });
+
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+    if (logChannel && logChannel.isTextBased()) {
+      await logChannel.send({
+        content: `📥 Ticket créé : <#${ticketChannel.id}> par <@${user.id}> dans la catégorie ${type}`
+      });
+    }
+
+    await interaction.reply({
+      content: `✅ Ticket créé : <#${ticketChannel.id}>`,
+      ephemeral: true
+    });
+  } catch (err) {
+    console.error('❌ Erreur lors de la création du ticket :', err);
+    await interaction.reply({
+      content: '❌ Une erreur est survenue lors de la création du ticket.',
+      ephemeral: true
+    });
+  }
 });
 
 client.on(Events.MessageCreate, async (message) => {
