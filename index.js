@@ -201,7 +201,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
             PermissionsBitField.Flags.ReadMessageHistory
           ]
         }
-      ]
+      ];
+    
+      if (type === 'dev') {
+      const category = await guild.channels.fetch(categoryId);
+      if (category && category.permissionOverwrites) {
+        permissionOverwrites = category.permissionOverwrites.cache.map(po => ({
+          id: po.id,
+          allow: po.allow.bitfield,
+          deny: po.deny.bitfield
+        }));
+        permissionOverwrites.push({
+          id: user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.ReadMessageHistory
+          ]
+        });
+      }
+    }
     });
 
     let ticketMessage = `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Merci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.`;
@@ -220,10 +239,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
 
-    await interaction.reply({
-      content: `✅ Ticket créé : <#${ticketChannel.id}>`,
-      ephemeral: true
-    });
+    await interaction.reply({ 
+      content: `✅ Ticket créé : <#${ticketChannel.id}>`, 
+      flags: 64 });
+
   } catch (err) {
     console.error('❌ Erreur lors de la création du ticket :', err);
     await interaction.reply({
