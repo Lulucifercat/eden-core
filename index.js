@@ -54,32 +54,55 @@ const roleMentions = {
   'mj': ['<@&ID_MJ>']
 };
 
-// Message indiquant que le bot est bien connecté
-client.once(Events.ClientReady, () => {
-  console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
-});
+const embedData = {
+  'spec': {
+    title: '👁️ Demander un spec',
+    description: "Tu sens qu’une scène RP risque de partir en vrille ? ...\n\nCe formulaire te permet de demander la présence d’un membre du staff.\n..."
+  },
+  'background': {
+    title: '📜 Envoies ton background !',
+    description: "Avant de poser les pieds dans l’Ouest sauvage...\n\nCe ticket te permet d’envoyer ton background RP pour validation par le staff.\n..."
+  },
+  'problématique': {
+    title: '🚨 Signaler un problème ou un comportement',
+    description: "Tu rencontres un souci sérieux avec un autre joueur...\n\nNous traiterons ta demande avec la plus grande confidentialité."
+  },
+  'dev': {
+    title: '🛠️ Demander une intervention du développeur',
+    description: "Tu rencontres un bug technique, un souci de script...\n\nCe ticket est fait pour contacter l’équipe de développement."
+  },
+  'helpeur': {
+    title: '🧊 Ouvre un ticket d’aide',
+    description: "Tu rencontres un souci technique, un bug en jeu...\n\nUn membre du staff viendra te répondre au plus vite."
+  },
+  'autres': {
+    title: '⚖️ Déposer une réclamation ou demande de grade',
+    description: "Tu veux signaler un comportement inapproprié, une décision injuste...\n\nToute demande sans fondement ou insultante sera ignorée."
+  },
+  'mj': {
+    title: '📜 Ouvre un ticket MJ',
+    description: "Tu as une demande liée à l’univers RP ? Les MJ sont là pour t’écouter...\n\nMerci de formuler ta demande de façon claire et détaillée."
+  }
+};
 
-
-// Fonction d'initialisation des embeds avec bouton pour chaque salon prévu
 async function setupEmbeds() {
   for (const [type, channelId] of Object.entries(ticketChannels)) {
     try {
       const channel = await client.channels.fetch(channelId);
       if (!channel) continue;
 
-      // 🔄 Vérifie si un message avec bouton existe déjà pour éviter les doublons à chaque redémarrage
       const existingMessages = await channel.messages.fetch({ limit: 10 });
       const existing = existingMessages.find(m => m.author.id === client.user.id && m.components.length > 0);
       if (existing) continue;
 
       const embed = new EmbedBuilder()
-        .setTitle(`🎫 Créer un ticket : ${type.charAt(0).toUpperCase() + type.slice(1)}`)
-        .setDescription("Clique sur le bouton ci-dessous pour créer un ticket concernant ce sujet.")
-        .setColor(0x3498db);
+        .setTitle(embedData[type].title)
+        .setDescription(embedData[type].description)
+        .setColor(0x2c3e50);
 
       const button = new ButtonBuilder()
         .setCustomId(`create_${type}`)
-        .setLabel("Ouvrir un ticket")
+        .setLabel(`🎫 Ticket ${type.charAt(0).toUpperCase() + type.slice(1)}`)
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
