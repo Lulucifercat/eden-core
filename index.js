@@ -1,5 +1,4 @@
 // 📜 Eden-Core : gestion des tickets avec commandes !claim, !close, !delete, ping UptimeRobot et faux serveur HTTP
-
 const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField } = require('discord.js');
 const express = require('express');
 const app = express();
@@ -18,9 +17,7 @@ const client = new Client({
 // ID du salon de logs où les tickets seront enregistrés
 const LOG_CHANNEL_ID = '1363845483533176883';
 
-// ID des salons où les boutons d'ouverture de ticket sont affichés.
-// Chaque salon correspond à un type spécifique de demande (spec, background, dev, etc.)
-// Eden Core enverra un embed dans chacun de ces salons avec un bouton pour créer un ticket.
+// ID des salons où les boutons d'ouverture de ticket sont affichés. Chaque salon correspond à un type spécifique de demande (spec, background, dev, etc.) Eden Core enverra un embed dans chacun de ces salons avec un bouton pour créer un ticket.
 const ticketChannels = {
   'spec': '1360714073897177301',
   'background': '1360713975544680710',
@@ -31,8 +28,7 @@ const ticketChannels = {
   'mj': '1360713808196276244'
 };
 
-// ID des catégories Discord dans lesquelles seront automatiquement créés les salons de tickets selon leur type sélectionné par l'utilisateur.
-// Ces catégories permettent de classer les tickets (Admin, Dev, Helpeur, MJ, etc.) pour une meilleure organisation.
+// ID des catégories Discord dans lesquelles seront automatiquement créés les salons de tickets selon leur type sélectionné par l'utilisateur. Ces catégories permettent de classer les tickets (Admin, Dev, Helpeur, MJ, etc.) pour une meilleure organisation.
 const ticketCategories = {
   'spec': '1362898038774829136',
   'background': '1362898038774829136',
@@ -72,11 +68,9 @@ Le staff interviendra seulement si nécessaire, mais sa présence est là pour t
   'background': {
     title: '📜 Envoies ton background !',
     description: `Avant de poser les pieds dans l’Ouest sauvage, ton personnage doit avoir une histoire, un passé, une raison d’être.
-
 Ce ticket te permet d’envoyer ton background RP pour validation par le staff. C’est ce document qui définira ce que ton personnage sait, peut faire, a vécu et redoute.
 
 ⚠️ Sois cohérent avec l’univers de chaque saison. Évite les personnages trop puissants, les traumatismes gratuits ou les éléments surnaturels sans justification.
-
 Souviens toi lors de ta douane, tu as discuté avec un membre du staff de la saison en cours. Si ton dossier ne correspond pas à la saison, le staff se réserve le droit de refuser ou de te demander de modifier celui-ci.`
   },
   'problématique': {
@@ -89,7 +83,6 @@ Souviens toi lors de ta douane, tu as discuté avec un membre du staff de la sai
 • etc..., tout ce que tu penses être problématique.
 
 Merci d’expliquer calmement et clairement ce qu’il s’est passé. Si tu as des preuves (screens, REC), joins-les au ticket dès l’ouverture.
-
 Nous traiterons ta demande avec la plus grande confidentialité et impartialité.`
   },
   'dev': {
@@ -112,7 +105,6 @@ Tu peux ouvrir un ticket pour :
     description: `Tu rencontres un souci technique, un bug en jeu ne nécessitant pas l’intervention d’un développeur, un problème de connexion ou tu as une question sur le serveur ?
 
 Appuie sur le bouton ci-dessous pour ouvrir un ticket avec l’équipe support. Un membre du staff viendra te répondre au plus vite.
-
 ⚠️ Merci d’expliquer clairement ton problème une fois le ticket ouvert.`
   },
   'autres': {
@@ -125,7 +117,6 @@ Tu peux déposer une réclamation pour :
 • Abus d’un joueur ou d’un membre du staff,
 • Traitement inéquitable / sanction,
 • Demande du grade streamer.
-
 ⚠️ Merci de rester respectueux, clair et de fournir des preuves si possible. Toute demande sans fondement ou insultante sera ignorée.`
   },
   'mj': {
@@ -147,10 +138,9 @@ async function setupEmbeds() {
       const channel = await client.channels.fetch(channelId);
       if (!channel) continue;
 
-      // Cette vérification empêche les doublons d'embeds à chaque redémarrage du bot
       const existingMessages = await channel.messages.fetch({ limit: 10 });
-      const existing = existingMessages.find(m => m.author.id === client.user.id && m.components.length > 0);
-      if (existing) continue;
+      const alreadyExists = existingMessages.some(m => m.author.id === client.user.id && m.components.length > 0);
+      if (alreadyExists) continue;
 
       const embed = new EmbedBuilder()
         .setTitle(embedData[type].title)
@@ -163,6 +153,7 @@ async function setupEmbeds() {
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
+
       await channel.send({ embeds: [embed], components: [row] });
     } catch (err) {
       console.error(`Erreur lors de l'envoi de l'embed dans ${type} :`, err);
@@ -170,82 +161,22 @@ async function setupEmbeds() {
   }
 }
 
+setInterval(() => {
+  console.log("🌙 Eden Core veille toujours dans l'obscurité...");
+}, 30 * 60 * 1000);
+
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Eden Core connecté en tant que ${client.user.tag}`);
   await setupEmbeds();
 });
 
-
-// Ce bloc gère la création d'un ticket lorsqu’un utilisateur clique sur un bouton d’embed.
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton()) return;
-  const [action, type] = interaction.customId.split('_');
-  if (action !== 'create' || !ticketCategories[type]) return;
-
-  const categoryId = ticketCategories[type];
-  const user = interaction.user;
-  const guild = interaction.guild;
-
-  try {
-    // Ce bloc gère la création des tickets lorsqu’un bouton est cliqué
-    const ticketChannel = await guild.channels.create({
-      name: `ticket-${user.username.toLowerCase()}`,
-      type: ChannelType.GuildText,
-      parent: categoryId,
-      topic: `Ticket de ${user.id}`,
-      permissionOverwrites: [
-        {
-          id: guild.roles.everyone,
-          deny: [PermissionsBitField.Flags.ViewChannel]
-        },
-        {
-          id: user.id,
-          allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory]
-        }
-      ]
-    });
-
-      await ticketChannel.send({ content: `🎟️ Bonjour <@${user.id}>, ton ticket a été créé. Merci de nous fournir les détails nécessaires pour que nous puissions t’aider efficacement.` });
-
-    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
-    if (roleMentions[type]) {
-      content += ` ${roleMentions[type].join(' ')} a été notifié.`;
-    }
-    if (logChannel && logChannel.isTextBased()) {
-      await logChannel.send({ content: `📥 Ticket créé : <#${ticketChannel.id}> par <@${user.id}> dans la catégorie ${type}` });
-    }
-
-    await interaction.reply({ content: `✅ Ticket créé : <#${ticketChannel.id}>`, ephemeral: true });
-  } catch (err) {
-    console.error("Erreur lors de la création du ticket :", err);
-    await interaction.reply({ content: "❌ Une erreur est survenue lors de la création du ticket.", ephemeral: true });
-  }
-});
-
-    // Enregistre la création du ticket dans le salon de logs
-    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
-    if (logChannel && logChannel.isTextBased()) {
-      await logChannel.send({ content: `📥 Ticket créé : <#${ticketChannel.id}> par <@${user.id}> dans la catégorie ${type}` });
-    }
-
-    // Réponse éphémère à l'utilisateur
-    await interaction.reply({ content: `✅ Ticket créé : <#${ticketChannel.id}>`, ephemeral: true });
-  } catch (err) {
-    console.error("Erreur lors de la création du ticket :", err);
-    await interaction.reply({ content: "❌ Une erreur est survenue lors de la création du ticket.", ephemeral: true });
-  }
-});
-
-
-
-  // Partie Staff pour prendre en charge les tickets
 client.on(Events.MessageCreate, async (message) => {
   if (!message.guild || message.author.bot) return;
 
   const member = message.member;
   const channel = message.channel;
   const content = message.content.toLowerCase();
-  
+
   if (content === '!claim') {
     let emoji = '🎫';
     if (member.roles.cache.some(role => role.name === 'Resp. Admin')) emoji = '🟪';
@@ -273,7 +204,6 @@ client.on(Events.MessageCreate, async (message) => {
     try {
       await message.reply("🔒 *Le ticket est désormais clos. Merci pour votre message.*");
       await channel.send("📌 *Ce ticket a été marqué comme résolu. Un membre du staff peut le supprimer avec `!delete`.*");
-
       const ticketOpener = message.mentions.users.first() || channel.topic?.match(/<@(\d+)>/)?.[1];
       if (ticketOpener) {
         await channel.permissionOverwrites.edit(ticketOpener, {
@@ -304,10 +234,6 @@ client.on(Events.MessageCreate, async (message) => {
     return;
   }
 });
-// 💫 Ping interne pour rester actif
-setInterval(() => {
-  console.log("🌙 Eden Core veille toujours dans l'obscurité...");
-}, 30 * 60 * 1000);
 
 client.login(TOKEN);
 
@@ -316,8 +242,6 @@ app.get("/", (req, res) => {
   res.send("Eden Core est éveillé.");
 });
 
-// 🌐 Faux serveur HTTP pour Render
-app.get("/", (req, res) => res.send("Eden Core veille..."));
 app.listen(process.env.PORT || 3000, () => {
   console.log("🌐 Faux serveur HTTP lancé pour Render");
 });
