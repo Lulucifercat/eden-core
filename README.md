@@ -4,15 +4,15 @@ Eden Core est un bot Discord personnalisé pour la gestion avancée des tickets 
 
 ## Fonctionnalités principales
 
-✨ Envoi automatique d'embeds de création de tickets dans les salons dédiés : spec, background, problématique, dev, helpeur, mj, autres.
-✨ Boutons interactifs pour créer un ticket privé selon le type de demande.
-✨ Création automatique de salons dans les bonnes catégories Discord (Admin, Dev, MJ, Helpeur...).
-✨ Ping automatique des rôles concernés selon le type de ticket.
-✨ Synchronisation des permissions personnalisées avec la catégorie pour les tickets dev.
-✨ “!claim” : Permet à un staff de se déclarer responsable du ticket (renommage du salon avec emoji).
-✨ “!close” : Ferme le ticket (retire l’accès au joueur).
-✨ “!delete” : Supprime le salon après 2 secondes.
-✨ Log de tous les tickets dans un salon défini (LOG_CHANNEL_ID).
+- Envoi automatique d'embeds de création de tickets dans les salons dédiés : spec, background, problématique, dev, helpeur, mj, autres.
+- Boutons interactifs pour créer un ticket privé selon le type de demande.
+- Création automatique de salons dans les bonnes catégories Discord (Admin, Dev, MJ, Helpeur...).
+- Ping automatique des rôles concernés selon le type de ticket.
+- Synchronisation des permissions personnalisées avec la catégorie pour les tickets dev.
+- “!claim” : Permet à un staff de se déclarer responsable du ticket (renommage du salon avec emoji).
+- “!close” : Ferme le ticket (retire l’accès au joueur).
+- “!delete” : Supprime le salon après 2 secondes.
+- Log de tous les tickets dans un salon défini (LOG_CHANNEL_ID).
 
 ## Technologies
 - Node.js
