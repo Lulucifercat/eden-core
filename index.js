@@ -16,6 +16,7 @@ const client = new Client({
 
 // ID du salon de logs où les tickets seront enregistrés
 const LOG_CHANNEL_ID = '1363845483533176883';
+const LOG_CHANNEL_ID_EDEN = '1364718735763443763';
 
 // ID des salons où les boutons d'ouverture de ticket sont affichés. Chaque salon correspond à un type spécifique de demande (spec, background, dev, etc.) Eden Core enverra un embed dans chacun de ces salons avec un bouton pour créer un ticket.
 const ticketChannels = {
@@ -331,3 +332,38 @@ app.get("/", (req, res) => {
 app.listen(process.env.PORT || 3000, () => {
   console.log("🌐 Faux serveur HTTP lancé pour Render");
 });
+
+client.on('error', async (error) => {
+  const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
+  if (logChannel && logChannel.isTextBased()) {
+    logChannel.send(`❌ **Erreur client :**\n\\`\`\`${error.message}\\`\`\``);
+  }
+});
+
+process.on('unhandledRejection', async (reason) => {
+  const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
+  if (logChannel && logChannel.isTextBased()) {
+    logChannel.send(`⚠️ **Unhandled Rejection :**\n\\`\`\`${reason}\\`\`\``);
+  }
+});
+
+// 🧠 MONITORING MÉMOIRE ET CPU BASIQUE
+const os = require('os');
+const { setInterval } = require('node:timers');
+
+setInterval(async () => {
+  const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
+  if (!logChannel || !logChannel.isTextBased()) return;
+
+  const used = process.memoryUsage().heapUsed / 1024 / 1024;
+  const totalMem = os.totalmem() / 1024 / 1024;
+  const freeMem = os.freemem() / 1024 / 1024;
+  const cpuLoad = os.loadavg()[0];
+
+  const statusMsg = `📊 **Monitoring système**
+🧠 RAM utilisée : ${Math.round(used * 100) / 100} MB / ${Math.round(totalMem)} MB
+💨 RAM libre : ${Math.round(freeMem)} MB
+⚙️ Charge CPU (1m) : ${cpuLoad}`;
+
+  logChannel.send(statusMsg);
+}, 60 * 60 * 1000); // Toutes les heures
