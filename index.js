@@ -1,6 +1,8 @@
 // 📜 Eden-Core : gestion des tickets avec commandes !claim, !close, !delete, ping UptimeRobot et faux serveur HTTP
 const { Client, GatewayIntentBits, Events, Partials, PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
 const express = require('express');
+const os = require('os');
+const { setInterval } = require('node:timers');
 const app = express();
 const TOKEN = process.env.TOKEN;
 
@@ -322,6 +324,10 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
+setInterval(() => {
+  console.log("🌙 Eden Core veille toujours dans l'obscurité...");
+}, 30 * 60 * 1000);
+
 client.login(TOKEN);
 
 app.get("/", (req, res) => {
@@ -334,36 +340,41 @@ app.listen(process.env.PORT || 3000, () => {
 });
 
 client.on('error', async (error) => {
-  const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
-  if (logChannel && logChannel.isTextBased()) {
-    await logChannel.send(`❌ **Erreur client :**\n\`\`\`${error.message}\`\`\``);
+  try {
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
+    if (logChannel && logChannel.isTextBased()) {
+      await logChannel.send(`❌ **Erreur client :**\n\`\`\`${error.message}\`\`\``);
+    }
+  } catch (err) {
+    console.error('Erreur en log d\'erreur client :', err);
   }
 });
 
 process.on('unhandledRejection', async (reason) => {
-  const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
-  if (logChannel && logChannel.isTextBased()) {
-    await logChannel.send(`⚠️ **Unhandled Rejection :**\n\`\`\`${reason}\`\`\``);
+  try {
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
+    if (logChannel && logChannel.isTextBased()) {
+      await logChannel.send(`⚠️ **Unhandled Rejection :**\n\`\`\`${reason}\`\`\``);
+    }
+  } catch (err) {
+    console.error('Erreur en log d\'Unhandled Rejection :', err);
   }
 });
 
-// 🧠 MONITORING MÉMOIRE ET CPU BASIQUE
-const os = require('os');
-const { setInterval } = require('node:timers');
-
 setInterval(async () => {
-  const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
-  if (!logChannel || !logChannel.isTextBased()) return;
+  try {
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
+    if (!logChannel || !logChannel.isTextBased()) return;
 
-  const used = process.memoryUsage().heapUsed / 1024 / 1024;
-  const totalMem = os.totalmem() / 1024 / 1024;
-  const freeMem = os.freemem() / 1024 / 1024;
-  const cpuLoad = os.loadavg()[0];
+    const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    const totalMem = os.totalmem() / 1024 / 1024;
+    const freeMem = os.freemem() / 1024 / 1024;
+    const cpuLoad = os.loadavg()[0];
 
-  const statusMsg = `📊 **Monitoring système**
-🧠 RAM utilisée : ${Math.round(used * 100) / 100} MB / ${Math.round(totalMem)} MB
-💨 RAM libre : ${Math.round(freeMem)} MB
-⚙️ Charge CPU (1m) : ${cpuLoad}`;
+    const statusMsg = `📊 **Monitoring système**\n🧠 RAM utilisée : ${Math.round(used * 100) / 100} MB / ${Math.round(totalMem)} MB\n💨 RAM libre : ${Math.round(freeMem)} MB\n⚙️ Charge CPU (1m) : ${cpuLoad}`;
 
-  logChannel.send(statusMsg);
-}, 60 * 60 * 1000); // Toutes les heures
+    await logChannel.send(statusMsg);
+  } catch (err) {
+    console.error('Erreur dans le monitoring mémoire/CPU :', err);
+  }
+}, 60 * 60 * 1000);
