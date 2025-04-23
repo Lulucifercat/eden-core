@@ -32,7 +32,7 @@ Eden Core est un bot Discord développé pour le serveur **EDEN RP**, conçu pou
 
 ## Déploiement
 - Créez un bot via le portail des applications Discord.
-- - Cloner ce repo dans Render, Railway, ou localement.
+- Cloner ce repo dans Render, Railway, ou localement.
 
 ## Créez un fichier .env avec :
 - TOKEN=your_discord_bot_token
