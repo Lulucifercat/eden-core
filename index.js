@@ -336,7 +336,7 @@ app.listen(process.env.PORT || 3000, () => {
 client.on('error', async (error) => {
   const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
   if (logChannel && logChannel.isTextBased()) {
-    logChannel.send(`❌ **Erreur client :**\n\\`\`\`${error.message}\\`\`\``);
+    await logChannel.send(`❌ **Erreur client :**\n\`\`\`${error.message}\`\`\``);
   }
 });
 
