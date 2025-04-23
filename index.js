@@ -343,7 +343,7 @@ client.on('error', async (error) => {
 process.on('unhandledRejection', async (reason) => {
   const logChannel = await client.channels.fetch(LOG_CHANNEL_ID_EDEN);
   if (logChannel && logChannel.isTextBased()) {
-    logChannel.send(`⚠️ **Unhandled Rejection :**\n\\`\`\`${reason}\\`\`\``);
+    await logChannel.send(`⚠️ **Unhandled Rejection :**\n\`\`\`${reason}\`\`\``);
   }
 });
 
