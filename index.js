@@ -377,4 +377,4 @@ setInterval(async () => {
   } catch (err) {
     console.error('Erreur dans le monitoring mémoire/CPU :', err);
   }
-}, 60 * 60 * 1000);
+}, 180 * 60 * 1000);
